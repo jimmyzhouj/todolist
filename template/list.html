@@ -1,0 +1,15 @@
+<h1> files</h1>
+<table>
+<tr style='text-align: left'>
+  <th>Id</th>
+  <th>Title</th>
+  <th>Date</th>
+</tr>
+{{range .}}
+<tr>
+  <td><a href='{{.Id}}'>{{.Id}}</a></td>
+  <td>{{.Title}}</td>
+  <td>{{.Date}}</td>
+</tr>
+{{end}}
+</table>
