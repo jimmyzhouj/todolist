@@ -1,7 +1,7 @@
-<h1>Editing {{.Title}}</h1>
+<h1>Edit Item</h1>
 
-<form action="/list" method="POST">
-<div>title:<input type="text" name="title"></div>
+<form action="/item/{{.Id}}" method="POST">
+<div>title:<input type="text" name="title" value={{.Title}}></div>
 <div><textarea name="body" rows="20" cols="80">{{printf "%s" .Body}}</textarea></div>
 <div><input type="submit" value="Save"></div>
 </form>

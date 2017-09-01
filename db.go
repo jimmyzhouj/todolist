@@ -26,6 +26,7 @@ func dbInsertItem(item *Item) {
     }
     //insert data
     stmt, err := db.Prepare("INSERT INTO items(title, content, created) values(?, ?, ?)")
+    defer stmt.Close()
     checkErr(err)
 
     //_, err = stmt.Exec("aa", "aa", "aa")
@@ -36,6 +37,7 @@ func dbInsertItem(item *Item) {
 func dbGetAllItems() []*Item {
 
     rows, err := db.Query("SELECT * FROM items")
+    defer rows.Close()
     checkErr(err)
 
     var list []*Item
@@ -58,12 +60,31 @@ func dbGetAllItems() []*Item {
 }
 
 // query item
-func dbGetItem() *Item {  
-    //update
-    // rows, err := db.Query("SELECT * FROM ")
-    // checkErr(err)
+func dbGetItem(uid uint64) *Item {  
+    
+    stmt, err := db.Prepare("SELECT * FROM items where uid=?")
+    defer stmt.Close()
+    checkErr(err)
+    rows, err := stmt.Query(uid)
+    checkErr(err)    
 
-    item := &Item{}
+    var item *Item
+    for rows.Next() {
+        var uid uint64
+        var title string
+        var content []byte
+        var created string
+        err = rows.Scan(&uid, &title, &content, &created)
+        checkErr(err)
+        fmt.Println("list item")
+        fmt.Println(uid)
+        fmt.Println(title)
+        fmt.Println(content)
+        fmt.Println(created)
+        item = &Item{Id:uid, Title:title, Body:content, Date:created}
+        //break
+    }
+
     return item
 }
 
@@ -75,11 +96,12 @@ func dbUpdateItem(item *Item) {
         return 
     }
 
-    // stmt, err := db.Prepare("update items set username=? where uid=?")
-    // checkErr(err)
+    stmt, err := db.Prepare("update items set title=?, content=?, created=?  where uid=?")
+    defer stmt.Close()
+    checkErr(err)
 
-    // res, err := stmt.Exec("zjupdate", id)
-    // checkErr(err)    
+    _, err = stmt.Exec(item.Title, item.Body, item.Date, item.Id)
+    checkErr(err)    
 }
 
 

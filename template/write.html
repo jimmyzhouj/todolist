@@ -1,0 +1,7 @@
+<h1>Write Item</h1>
+
+<form action="/write" method="POST">
+<div>title:<input type="text" name="title"></div>
+<div><textarea name="body" rows="20" cols="80">{{printf "%s" .Body}}</textarea></div>
+<div><input type="submit" value="Save"></div>
+</form>
