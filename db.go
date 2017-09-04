@@ -7,6 +7,7 @@ import (
     "fmt"
     "database/sql" 
     _ "github.com/mattn/go-sqlite3"
+    "time"
 )
 
 var db *sql.DB
@@ -25,12 +26,12 @@ func dbInsertItem(item *Item) {
         return 
     }
     //insert data
-    stmt, err := db.Prepare("INSERT INTO items(title, content, created) values(?, ?, ?)")
+    stmt, err := db.Prepare("INSERT INTO items(title, content, created, duetime, done) values(?, ?, ?, ?, ?)")
     defer stmt.Close()
     checkErr(err)
 
     //_, err = stmt.Exec("aa", "aa", "aa")
-    _, err = stmt.Exec(item.Title, item.Body, item.Date)
+    _, err = stmt.Exec(item.Title, item.Body, item.Created, item.DueTime, item.Done)
     checkErr(err)
 }
 
@@ -46,14 +47,16 @@ func dbGetAllItems() []*Item {
         var title string
         var content []byte
         var created string
-        err = rows.Scan(&uid, &title, &content, &created)
+        var duetime time.Time
+        var done bool
+        err = rows.Scan(&uid, &title, &content, &created, &duetime, &done)
         checkErr(err)
-        fmt.Println("list item")
-        fmt.Println(uid)
-        fmt.Println(title)
-        fmt.Println(content)
-        fmt.Println(created)
-        item := &Item{Id:uid, Title:title, Body:content, Date:created}
+        // fmt.Println("list item")
+        // fmt.Println(uid)
+        // fmt.Println(title)
+        // fmt.Println(content)
+        // fmt.Println(created)
+        item := &Item{Id:uid, Title:title, Body:content, Created:created, DueTime:duetime, Done:done}
         list = append(list, item)
     }
     return list
@@ -74,15 +77,12 @@ func dbGetItem(uid uint64) *Item {
         var title string
         var content []byte
         var created string
-        err = rows.Scan(&uid, &title, &content, &created)
+        var duetime time.Time
+        var done bool        
+        err = rows.Scan(&uid, &title, &content, &created, &duetime, &done)
         checkErr(err)
-        fmt.Println("list item")
-        fmt.Println(uid)
-        fmt.Println(title)
-        fmt.Println(content)
-        fmt.Println(created)
-        item = &Item{Id:uid, Title:title, Body:content, Date:created}
-        //break
+        item = &Item{Id:uid, Title:title, Body:content, Created:created, DueTime:duetime, Done:done}
+
     }
 
     return item
@@ -96,11 +96,10 @@ func dbUpdateItem(item *Item) {
         return 
     }
 
-    stmt, err := db.Prepare("update items set title=?, content=?, created=?  where uid=?")
+    stmt, err := db.Prepare("update items set title=?, content=?, created=?, duetime=?, done=?  where uid=?")
     defer stmt.Close()
     checkErr(err)
-
-    _, err = stmt.Exec(item.Title, item.Body, item.Date, item.Id)
+    _, err = stmt.Exec(item.Title, item.Body, item.Created, item.DueTime, item.Done, item.Id)
     checkErr(err)    
 }
 
@@ -112,11 +111,11 @@ func dbDeleteItem(item *Item) {
         return 
     }
 
-    // stmt, err = db.Prepare("delete from items where uid=?")
-    // checkErr(err)
+    stmt, err := db.Prepare("delete from items where uid=?")
+    checkErr(err)
 
-    // res, err = stmt.Exec(id)
-    // checkErr(err)
+    _, err = stmt.Exec(item.Id)
+    checkErr(err)
 
     // affect, err = res.RowsAffected()
     // checkErr(err)

@@ -1,7 +1,33 @@
-<h1>Edit Item</h1>
+<style type="text/css">.error {color: red;}</style>
 
-<form action="/item/{{.Id}}" method="POST">
-<div>title:<input type="text" name="title" value={{.Title}}></div>
-<div><textarea name="body" rows="20" cols="80">{{printf "%s" .Body}}</textarea></div>
-<div><input type="submit" value="Save"></div>
+<h1>Edit Item</h1>
+<form action="/item/{{.Id}}" method="POST" novalidate>
+    <div>
+        <input type="submit" name="remove" value="Remove">
+    </div><br />    
+    <div>
+        {{ with .Errors.Title }}
+        <p class="error">{{ . }}</p>
+        {{ end }}
+        <label>Title:</label><br />                    
+        <input type="text" name="title" value={{.Title}}>
+    </div>
+    <div>
+        <label>Created:</label><br />     
+        <input type="text" name="created" value={{.Created}}>
+    </div>
+    <div>
+        <label>due:</label><br />         
+        <input type="text" name="due" value={{.DueTime}}>
+    </div>    
+    <div>
+        {{ with .Errors.Body }}
+        <p class="error">{{ . }}</p>
+        {{ end }}
+        <label>Content:</label><br />            
+        <textarea name="body" rows="20" cols="80">{{printf "%s" .Body}}</textarea>
+    </div>
+    <div>
+        <input type="submit" value="Save">
+    </div>
 </form>

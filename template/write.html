@@ -1,7 +1,23 @@
-<h1>Write Item</h1>
+<style type="text/css">.error {color: red;}</style>
 
-<form action="/write" method="POST">
-<div>title:<input type="text" name="title"></div>
-<div><textarea name="body" rows="20" cols="80">{{printf "%s" .Body}}</textarea></div>
-<div><input type="submit" value="Save"></div>
+<h1>Write Item</h1>
+<form action="/write" method="POST" novalidate>
+
+    <div>
+        {{ with .Errors.Title }}
+        <p class="error">{{ . }}</p>
+        {{ end }}
+        <label>Title:</label><br />                    
+        <input type="text" name="title" value={{.Title}}>
+    </div>
+    <div>
+        {{ with .Errors.Body }}
+        <p class="error">{{ . }}</p>
+        {{ end }}
+        <label>Content:</label><br />            
+        <textarea name="body" rows="20" cols="80">{{printf "%s" .Body}}</textarea>
+    </div>
+    <div>
+        <input type="submit" value="Save">
+    </div>
 </form>

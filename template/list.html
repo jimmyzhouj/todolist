@@ -1,15 +1,22 @@
 <h1> files</h1>
-<table>
+
+<form action="/write" method="GET">
+<div><input type="submit" value="新增"></div>
+</form>
+
+<table cellpadding="5">
 <tr style='text-align: left'>
   <th>Id</th>
   <th>Title</th>
-  <th>Date</th>
+  <th>Done</th>  
+  <th>Created</th>
 </tr>
 {{range .}}
 <tr>
   <td><a href='/item/{{.Id}}'>{{.Id}}</a></td>
   <td>{{.Title}}</td>
-  <td>{{.Date}}</td>
+  <td>{{.Done}}</td>  
+  <td>{{.Created}}</td>
 </tr>
 {{end}}
 </table>
