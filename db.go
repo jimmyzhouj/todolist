@@ -26,12 +26,12 @@ func dbInsertItem(item *Item) {
         return 
     }
     //insert data
-    stmt, err := db.Prepare("INSERT INTO items(title, content, created, duetime, done) values(?, ?, ?, ?, ?)")
+    stmt, err := db.Prepare("INSERT INTO items(userid, title, content, done, created, duetime) values(?, ?, ?, ?, ?, ?)")
     defer stmt.Close()
     checkErr(err)
 
     //_, err = stmt.Exec("aa", "aa", "aa")
-    _, err = stmt.Exec(item.Title, item.Body, item.Created, item.DueTime, item.Done)
+    _, err = stmt.Exec(item.UserId, item.Title, item.Body, item.Done, item.Created, item.DueTime)
     checkErr(err)
 }
 
@@ -44,19 +44,42 @@ func dbGetAllItems() []*Item {
     var list []*Item
     for rows.Next() {
         var uid uint64
+        var userid uint64
         var title string
         var content []byte
-        var created string
+        var created time.Time
         var duetime time.Time
         var done bool
-        err = rows.Scan(&uid, &title, &content, &created, &duetime, &done)
+        err = rows.Scan(&uid, &userid, &title, &content, &done, &created, &duetime)
         checkErr(err)
-        // fmt.Println("list item")
-        // fmt.Println(uid)
-        // fmt.Println(title)
-        // fmt.Println(content)
-        // fmt.Println(created)
-        item := &Item{Id:uid, Title:title, Body:content, Created:created, DueTime:duetime, Done:done}
+        fmt.Println(created)
+        item := &Item{Id:uid, UserId:userid, Title:title, Body:content, Created:created, DueTime:duetime, Done:done}
+        list = append(list, item)
+    }
+    return list
+}
+
+func dbGetItemsByUserId(userid uint64) []*Item {
+
+    stmt, err := db.Prepare("SELECT * FROM items where userid=?")
+    defer stmt.Close()
+    checkErr(err)
+    rows, err := stmt.Query(userid)
+    checkErr(err)      
+
+    var list []*Item
+    for rows.Next() {
+        var uid uint64
+        var userid uint64
+        var title string
+        var content []byte
+        var created time.Time
+        var duetime time.Time
+        var done bool
+        err = rows.Scan(&uid, &userid, &title, &content, &done, &created, &duetime)
+        checkErr(err)
+        fmt.Println(created)
+        item := &Item{Id:uid, UserId:userid, Title:title, Body:content, Created:created, DueTime:duetime, Done:done}
         list = append(list, item)
     }
     return list
@@ -74,17 +97,16 @@ func dbGetItem(uid uint64) *Item {
     var item *Item
     for rows.Next() {
         var uid uint64
+        var userid uint64        
         var title string
         var content []byte
-        var created string
+        var created time.Time
         var duetime time.Time
         var done bool        
-        err = rows.Scan(&uid, &title, &content, &created, &duetime, &done)
+        err = rows.Scan(&uid, &userid, &title, &content, &done, &created, &duetime)
         checkErr(err)
-        item = &Item{Id:uid, Title:title, Body:content, Created:created, DueTime:duetime, Done:done}
-
+        item = &Item{Id:uid, UserId:userid, Title:title, Body:content, Created:created, DueTime:duetime, Done:done}
     }
-
     return item
 }
 
@@ -96,31 +118,71 @@ func dbUpdateItem(item *Item) {
         return 
     }
 
-    stmt, err := db.Prepare("update items set title=?, content=?, created=?, duetime=?, done=?  where uid=?")
+    stmt, err := db.Prepare("update items set title=?, content=?, done=?, created=?, duetime=?  where uid=?")
     defer stmt.Close()
     checkErr(err)
-    _, err = stmt.Exec(item.Title, item.Body, item.Created, item.DueTime, item.Done, item.Id)
+    _, err = stmt.Exec(item.Title, item.Body, item.Done, item.Created, item.DueTime, item.Id)
     checkErr(err)    
 }
 
 
-func dbDeleteItem(item *Item) {
-
-    if item == nil {
-        panic("item is nil")
-        return 
-    }
+func dbDeleteItem(id uint64) {
 
     stmt, err := db.Prepare("delete from items where uid=?")
     checkErr(err)
 
-    _, err = stmt.Exec(item.Id)
+    _, err = stmt.Exec(id)
     checkErr(err)
 
     // affect, err = res.RowsAffected()
     // checkErr(err)
     // fmt.Println("delete affected rows ", affect)
 }
+
+// table users related
+
+func dbInsertUser(user *User) bool {
+
+    if user == nil {
+        panic("user is nil")
+        return false
+    }
+    //insert data
+    stmt, err := db.Prepare("INSERT INTO users(name, password, created, active) values(?, ?, ?, ?)")
+    defer stmt.Close()
+    checkErr(err)
+
+    _, err = stmt.Exec(user.Name, user.Password, user.Created, user.Active)
+    checkErr(err)
+
+    return true
+}
+
+
+func dbGetUser(name string) *User {  
+    
+    stmt, err := db.Prepare("SELECT * FROM users where name=?")
+    defer stmt.Close()
+    checkErr(err)
+    rows, err := stmt.Query(name)
+    checkErr(err)    
+
+    var user *User
+    for rows.Next() {
+        var uid uint64
+        var name string
+        var password string
+        var created time.Time
+        var active bool        
+        err = rows.Scan(&uid, &name, &password, &created, &active)
+        checkErr(err)
+        user = &User{Id:uid, Name:name, Password:password, Created:created, Active:active}
+    }
+
+    return user
+}
+
+
 
 
 func checkErr(err error) {

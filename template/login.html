@@ -1,0 +1,23 @@
+<style type="text/css">.error {color: red;}</style>
+
+<h1>Login Page</h1>
+<form action="/login" method="POST" novalidate>
+
+    <div>
+        {{ with .Errors.Name }}
+        <p class="error">{{ . }}</p>
+        {{ end }}
+        <label>用户名:</label><br />                    
+        <input type="text" name="name" value={{.Name}}>
+    </div>
+    <div>
+        {{ with .Errors.Password }}
+        <p class="error">{{ . }}</p>
+        {{ end }}
+        <label>密码:</label><br />                    
+        <input type="password" name="password" value={{.Password}}>
+    </div>
+    <div>
+        <input type="submit" value="登录">
+    </div>
+</form>

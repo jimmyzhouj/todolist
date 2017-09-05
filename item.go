@@ -12,9 +12,10 @@ import (
 // item definition
 type Item struct {
     Id uint64
+    UserId uint64
     Title string
     Body  []byte
-    Created string
+    Created time.Time
     DueTime time.Time
     Done bool
     Errors map[string]string  // show field errors
