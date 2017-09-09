@@ -24,7 +24,12 @@ var testUsers = []struct {
     valid bool
 }{
     {User{Id:0, Name:"hello", Password:"111"}, true},
-
+    {User{Name:"1ayelz", Password:"zzz"}, true},
+    {User{Name:" 1ayelz ", Password:" zzz "}, true},  
+    {User{Name:" 1ayelz ", Password:""}, false}, 
+    {User{Password:" 1ayelz "}, false},  
+    {User{Name:"", Password:" 1ayelz "}, false},   
+    {User{}, false},                 
 }
 
 
