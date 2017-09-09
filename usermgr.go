@@ -4,10 +4,10 @@
 package main
 
 import (
-    "fmt"
     "time"
     "strings"
-    "golang.org/x/crypto/bcrypt"    
+    "golang.org/x/crypto/bcrypt"
+    log "github.com/cihub/seelog"        
 )
 
 type UserMgr struct {
@@ -36,24 +36,24 @@ func (manager *UserMgr) Process(name, password string) (*User, bool) {
 
     tmp := dbGetUser(name)
     if tmp == nil {
-        fmt.Println("user not exist, create one")
+        log.Debug("user not exist, create one")
         tmp, ok := manager.CreateUser(name, password)
         if ok {
-            fmt.Println("Created user success")            
+            log.Infof("Created user for name %s success", name)            
             user = tmp
         }
     } else {
         // compare password
-        fmt.Println("user exist, verify password")        
+        log.Debug("user exist, verify password")        
         pass := []byte(password)
         hash := []byte(tmp.Password)
         if bcrypt.CompareHashAndPassword(hash, pass) != nil {
-            fmt.Printf("%s not match %s!", hash, pass)
+            log.Infof("%s not match %s!", hash, pass)
             user.Errors["Password"] = "password not match!"
             return user, false
         }        
         user = tmp
-        fmt.Println("pass verify, get user data")        
+        log.Debug("pass verify, get user data")        
     }
     return user, true
 }    
@@ -63,21 +63,21 @@ func (manager *UserMgr) CreateUser(name, password string) (*User, bool) {
     pass := []byte(password)
     hp, err := bcrypt.GenerateFromPassword(pass, 10)
     if err != nil {
-        fmt.Printf("GenerateFromPassword error: %s", err)
+        log.Warnf("GenerateFromPassword error: %s", err)
         return nil, false
     }
 
     if bcrypt.CompareHashAndPassword(hp, pass) != nil {
-        fmt.Printf("%s should hash %s correctly", hp, pass)
+        log.Warnf("%s should hash %s correctly", hp, pass)
         return nil, false
     }
     passwd := string(hp)
-    fmt.Println("salted password is ", passwd)
+    log.Debugf("salted password is %s", passwd)
     
     user := &User{Name:name, Password:passwd, Created:time.Now(), Active:true}
     ok := dbInsertUser(user)
     
-    fmt.Println("create user")
+    log.Debug("create user")
     return user, ok   
 }    
 

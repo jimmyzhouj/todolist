@@ -4,10 +4,10 @@
 package main
 
 import (
-    "fmt"
     "database/sql" 
     _ "github.com/mattn/go-sqlite3"
     "time"
+    log "github.com/cihub/seelog"    
 )
 
 var db *sql.DB
@@ -52,7 +52,6 @@ func dbGetAllItems() []*Item {
         var done bool
         err = rows.Scan(&uid, &userid, &title, &content, &done, &created, &duetime)
         checkErr(err)
-        fmt.Println(created)
         item := &Item{Id:uid, UserId:userid, Title:title, Body:content, Created:created, DueTime:duetime, Done:done}
         list = append(list, item)
     }
@@ -78,7 +77,6 @@ func dbGetItemsByUserId(userid uint64) []*Item {
         var done bool
         err = rows.Scan(&uid, &userid, &title, &content, &done, &created, &duetime)
         checkErr(err)
-        fmt.Println(created)
         item := &Item{Id:uid, UserId:userid, Title:title, Body:content, Created:created, DueTime:duetime, Done:done}
         list = append(list, item)
     }
@@ -193,8 +191,8 @@ func checkErr(err error) {
 
 
 
-func init() {
-    fmt.Println("init data base")
+func initDB() {
+    log.Info("init data base")
     db, err = sql.Open("sqlite3", "db/data.db")
     checkErr(err)  
 }

@@ -8,8 +8,8 @@ import (
     "html/template"
     "strconv"
     "time"
-    "log"
     "github.com/julienschmidt/httprouter"
+    log "github.com/cihub/seelog"
     "github.com/jimmyzhouj/session"
     _ "github.com/jimmyzhouj/session/providers/memory"                
 )
@@ -32,7 +32,7 @@ func getUser(w http.ResponseWriter, r *http.Request) (*User, error) {
 
     tmp := sess.Get("username")
     if tmp == nil || tmp.(string) == "" {
-        fmt.Println("no user bind to session, need login first")
+        log.Info("no user bind to session, need login first")
         return nil, fmt.Errorf("no user bind to session")
     }
 
@@ -46,12 +46,12 @@ func getUser(w http.ResponseWriter, r *http.Request) (*User, error) {
 
 
 func defaultHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    fmt.Println("get / handler run")
+    log.Debug("get / handler run")
     fmt.Fprint(w, "default, Welcome!\n")
 } 
 
 func listAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    fmt.Println("get /list handler run")
+    log.Debug("get /list handler run")
 
     user, err := getUser(w, r)
     if err != nil {
@@ -68,7 +68,7 @@ func listAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func writeItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    fmt.Println("get /write handler run")      
+    log.Debug("get /write handler run")      
 
     _, err := getUser(w, r)
     if err != nil {
@@ -79,7 +79,7 @@ func writeItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func addItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    fmt.Println("post /write handler run")  
+    log.Debug("post /write handler run")  
 
     user, err := getUser(w, r)
     if err != nil {
@@ -105,7 +105,7 @@ func addItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
   
 func viewItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    fmt.Println("get /item/xxx handler run")      
+    log.Debug("get /item/xxx handler run")      
     //fmt.Fprintf(w, "get one item, key is %s, value is %s\n", ps[0].Key, ps[0].Value)
     user, err := getUser(w, r)
     if err != nil {
@@ -123,17 +123,18 @@ func viewItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     if item.UserId == user.Id {
         renderTemplate(w, "edit.html", item)        
     } else {
-        fmt.Errorf("item user id %d not match cur user %s, user id %d \n", item.UserId, user.Name, user.Id)
+        log.Errorf("item user id %d not match cur user %s, user id %d \n", item.UserId, user.Name, user.Id)
         http.Redirect(w, r, "/login", http.StatusFound) 
     }
 
 }
 
 func editItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    fmt.Println("post /item/xxx handler run")  
+    log.Debug("post /item/xxx handler run")  
 
     user, err := getUser(w, r)
     if err != nil {
+        log.Error("can not get user ")
         http.Redirect(w, r, "/login", http.StatusFound)
         return
     }
@@ -142,12 +143,13 @@ func editItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     id, err := strconv.ParseUint(ps[0].Value, 10, 64)
     if err != nil {
         fmt.Fprintf(w, "can not find item for id %s\n", ps[0].Value)
+        log.Errorf("can not find item for id %s\n", ps[0].Value)
         return
     }
 
     item := dbGetItem(id)
     if item.UserId != user.Id {
-        fmt.Errorf("item user id %d not match cur user %s, user id %d \n", item.UserId, user.Name, user.Id)
+        log.Errorf("item user id %d not match cur user %s, user id %d \n", item.UserId, user.Name, user.Id)
         http.Redirect(w, r, "/login", http.StatusFound)
         return 
     }
@@ -159,16 +161,21 @@ func editItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     now := time.Now()
     
     if cmd == "Remove" {
+        log.Infof("remove item for id %s", id)
         dbDeleteItem(id)
         http.Redirect(w, r, "/list", http.StatusFound) 
     } else {
 
-        item := &Item{Title:title, Body:[]byte(body), Created:now}
+        item.Title = title
+        item.Body = []byte(body)
+        item.Created = now
+
         if item.Validate() == false {
+            log.Warn("validate item failed")
             renderTemplate(w, "edit.html", item)
             return
         }
-
+        log.Debugf("update item for id %d, title is %s", item.Id, title)
         dbUpdateItem(item) 
         http.Redirect(w, r, "/list", http.StatusFound)      
     }
@@ -176,42 +183,28 @@ func editItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 
 func showLogin(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    fmt.Println("get /login handler run")  
+    log.Debug("get /login handler run")  
 
     user, err := getUser(w, r)
     // not login, need login
     if err != nil {
-        fmt.Println("no username bind to session, need login")
+        log.Debug("no username bind to session, need login")
         err := templates.ExecuteTemplate(w, "login.html", nil)
         if err != nil {
             http.Error(w, err.Error(), http.StatusInternalServerError)
         } 
     } else {
         
-        fmt.Printf("get user name %s from session\n", user.Name)
-        fmt.Println("redirect to list")       
+        log.Debugf("get user name %s from session\n", user.Name)
+        log.Debug("redirect to list")       
         http.Redirect(w, r, "/list", http.StatusFound) 
     }
 
-
-    // sess := globalSessions.SessionStart(w, r)    
-    // tmp := sess.Get("username")
-    // if tmp != nil && tmp.(string) != "" {
-    //     fmt.Println("get user name from session " , tmp)
-    //     fmt.Println("redirect to list")       
-    //     http.Redirect(w, r, "/list", http.StatusFound)         
-    // } else {
-    //     fmt.Println("no username bind to session, need login")
-    //     err := templates.ExecuteTemplate(w, "login.html", nil)
-    //     if err != nil {
-    //         http.Error(w, err.Error(), http.StatusInternalServerError)
-    //     } 
-    // } 
 }  
 
 
 func loginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    fmt.Println("post /login handler run")      
+    log.Debug("post /login handler run")      
     r.ParseForm()
     name := r.FormValue("name")
     password := r.FormValue("password")
@@ -229,13 +222,13 @@ func loginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
     sess := globalSessions.SessionStart(w, r)
     // connect session and user
     sess.Set("username", name)
-    fmt.Printf("bind username %s to curr session \n", name)
+    log.Debugf("bind username %s to curr session \n", name)
 
     http.Redirect(w, r, "/list", http.StatusFound) 
 }    
 
 func showLogout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    fmt.Println("get /logout handler run")  
+    log.Debug("get /logout handler run")  
     err := templates.ExecuteTemplate(w, "logout.html", nil)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -244,12 +237,12 @@ func showLogout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 
 func logoutHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    fmt.Println("post /logout handler run")  
+    log.Debug("post /logout handler run")  
     sess := globalSessions.SessionStart(w, r)
 
     tmp := sess.Get("username")
     if tmp != nil && tmp.(string) != "" {
-        fmt.Printf("remove user name  %s from session\n", tmp.(string))
+        log.Debugf("remove user name  %s from session\n", tmp.(string))
         sess.Delete("username")
     }   
 
@@ -276,6 +269,9 @@ func init() {
 
 func main() {
 
+    initSeeLog()
+    initDB()
+
     router := httprouter.New()
 
     router.GET("/", defaultHandler)
@@ -289,5 +285,6 @@ func main() {
     router.GET("/logout", showLogout)    
     router.POST("/logout", logoutHandler)
 
-    log.Fatal(http.ListenAndServe(":8082", router))
+    http.ListenAndServe(":8082", router)
+    log.Critical ("listen and serve panic")
 } 
