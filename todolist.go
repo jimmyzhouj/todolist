@@ -46,7 +46,9 @@ func getUser(w http.ResponseWriter, r *http.Request) (*User, error) {
 
 
 func defaultHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    log.Debug("get / handler run")
+    log.Debug("get / handler run start ")
+    time.Sleep(7 * time.Second)
+    log.Debug("get / handler run finished")    
     fmt.Fprint(w, "default, Welcome!\n")
 } 
 
@@ -285,6 +287,7 @@ func main() {
     router.GET("/logout", showLogout)    
     router.POST("/logout", logoutHandler)
 
-    http.ListenAndServe(":8082", router)
+    //http.ListenAndServe(":8082", router)
+    http.ListenAndServeTLS(":8082", "cert/server.crt", "cert/server.key", router)
     log.Critical ("listen and serve panic")
 } 
