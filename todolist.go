@@ -11,7 +11,9 @@ import (
     "github.com/julienschmidt/httprouter"
     log "github.com/cihub/seelog"
     "github.com/jimmyzhouj/session"
-    _ "github.com/jimmyzhouj/session/providers/memory"                
+    _ "github.com/jimmyzhouj/session/providers/memory"
+    //"io/ioutil"
+    "encoding/json"                
 )
 
 
@@ -206,7 +208,8 @@ func showLogin(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 
 func loginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    log.Debug("post /login handler run")      
+    log.Debug("post /login handler run") 
+
     r.ParseForm()
     name := r.FormValue("name")
     password := r.FormValue("password")
@@ -229,6 +232,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
     http.Redirect(w, r, "/list", http.StatusFound) 
 }    
 
+
 func showLogout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     log.Debug("get /logout handler run")  
     err := templates.ExecuteTemplate(w, "logout.html", nil)
@@ -236,7 +240,6 @@ func showLogout(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
         http.Error(w, err.Error(), http.StatusInternalServerError)
     }  
 } 
-
 
 func logoutHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     log.Debug("post /logout handler run")  
@@ -252,6 +255,49 @@ func logoutHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 
     http.Redirect(w, r, "/login", http.StatusFound) 
 } 
+
+// for html api stop
+
+
+// for json api
+// start
+
+func apiLoginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+    log.Debug("post json /api/login handler run") 
+
+    decoder := json.NewDecoder(r.Body)
+    var user User
+    err := decoder.Decode(&user)
+    if err != nil {
+        panic(err)
+    }
+    defer r.Body.Close()
+
+
+    name := user.Name
+    password := user.Password
+
+    user, ok := userMgr.Process(name, password)
+    if ok == false {
+        err := templates.ExecuteTemplate(w, "login.html", user)
+        if err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+        }
+        return
+    }
+    // login in success, get session 
+    //fmt.Fprint(w, "get user success!\n")
+    sess := globalSessions.SessionStart(w, r)
+    // connect session and user
+    sess.Set("username", name)
+    log.Debugf("bind username %s to curr session \n", name)
+
+    var data = '{"a" = "b"}'
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    w.Write(data)
+
+}
 
 
 
@@ -286,6 +332,8 @@ func main() {
     router.POST("/login", loginHandler)  // user login
     router.GET("/logout", showLogout)    
     router.POST("/logout", logoutHandler)
+
+    router.POST("/api/login", apiLoginHandler)  // api user login
 
     //http.ListenAndServe(":8082", router)
     http.ListenAndServeTLS(":8082", "cert/server.crt", "cert/server.key", router)

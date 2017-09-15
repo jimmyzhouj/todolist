@@ -12,8 +12,8 @@ import (
 // user definition
 type User struct {
     Id uint64
-    Name string
-    Password string
+    Name string     `json:"name"`
+    Password string `json:"password"`
     Created time.Time
     Active bool
 
