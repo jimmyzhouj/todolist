@@ -19,11 +19,11 @@ func closeDb() {
 }
 
 // insert new item
-func dbInsertItem(item *Item) {
+func dbInsertItem(item *Item) uint64 {
 
     if item == nil {
         panic("item is nil")
-        return 
+        return 0 
     }
     //insert data
     stmt, err := db.Prepare("INSERT INTO items(userid, title, content, done, created, duetime) values(?, ?, ?, ?, ?, ?)")
@@ -31,8 +31,13 @@ func dbInsertItem(item *Item) {
     checkErr(err)
 
     //_, err = stmt.Exec("aa", "aa", "aa")
-    _, err = stmt.Exec(item.UserId, item.Title, item.Body, item.Done, item.Created, item.DueTime)
+    res, err := stmt.Exec(item.UserId, item.Title, item.Body, item.Done, item.Created, item.DueTime)
     checkErr(err)
+
+    id, err := res.LastInsertId()
+    checkErr(err)
+
+    return uint64(id)
 }
 
 func dbGetAllItems() []*Item {
@@ -46,7 +51,7 @@ func dbGetAllItems() []*Item {
         var uid uint64
         var userid uint64
         var title string
-        var content []byte
+        var content string
         var created time.Time
         var duetime time.Time
         var done bool
@@ -71,7 +76,7 @@ func dbGetItemsByUserId(userid uint64) []*Item {
         var uid uint64
         var userid uint64
         var title string
-        var content []byte
+        var content string
         var created time.Time
         var duetime time.Time
         var done bool
@@ -97,7 +102,7 @@ func dbGetItem(uid uint64) *Item {
         var uid uint64
         var userid uint64        
         var title string
-        var content []byte
+        var content string
         var created time.Time
         var duetime time.Time
         var done bool        
