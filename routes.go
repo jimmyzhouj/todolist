@@ -26,6 +26,8 @@ func NewRouter() *httprouter.Router {
     //router.POST("/api/login", apiLoginHandler)  // api user login
     router.POST("/api/v1/todos", apiItemCreate)     
     router.GET("/api/v1/todos", apiItemList)     
-
+    router.GET("/api/v1/todos/:id", apiItemShow)
+    router.PATCH("/api/v1/todos/:id", apiItemUpdate)
+    router.DELETE("/api/v1/todos/:id", apiItemDelete)          
     return router
 } 

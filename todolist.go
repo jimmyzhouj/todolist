@@ -31,7 +31,7 @@ func main() {
     initDB()
 
     router := NewRouter()
-    http.ListenAndServe(":8082", router)
-    //http.ListenAndServeTLS(":8082", "cert/server.crt", "cert/server.key", router)
+    //http.ListenAndServe(":8082", router)
+    http.ListenAndServeTLS(":8082", "cert/server.crt", "cert/server.key", router)
     log.Critical ("listen and serve panic")
 } 

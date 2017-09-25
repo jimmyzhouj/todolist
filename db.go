@@ -129,17 +129,18 @@ func dbUpdateItem(item *Item) {
 }
 
 
-func dbDeleteItem(id uint64) {
+func dbDeleteItem(id uint64) int64 {
 
     stmt, err := db.Prepare("delete from items where uid=?")
     checkErr(err)
 
-    _, err = stmt.Exec(id)
+    res, err := stmt.Exec(id)
     checkErr(err)
 
-    // affect, err = res.RowsAffected()
-    // checkErr(err)
-    // fmt.Println("delete affected rows ", affect)
+    affect, err := res.RowsAffected()
+    checkErr(err)
+    log.Debug("delete affected rows ", affect)
+    return affect
 }
 
 // table users related
