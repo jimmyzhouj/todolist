@@ -9,6 +9,10 @@ import (
     "strings"
 )
 
+
+type Users []*User
+
+
 // user definition
 type User struct {
     Id uint64
@@ -16,7 +20,7 @@ type User struct {
     Password string `json:"password"`
     Created time.Time
     Active bool
-
+    SessionId string `json:sessionid`
     Errors map[string]string  // show field errors
 }
 

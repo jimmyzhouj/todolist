@@ -187,6 +187,27 @@ func dbGetUser(name string) *User {
 }
 
 
+func dbGetAllUsers() []*User {
+
+    rows, err := db.Query("SELECT * FROM users")
+    defer rows.Close()
+    checkErr(err)
+
+    var list []*User
+    for rows.Next() {
+        var uid uint64
+        var name string
+        var password string
+        var created time.Time
+        var active bool        
+        err = rows.Scan(&uid, &name, &password, &created, &active)
+        checkErr(err)
+        user := &User{Id:uid, Name:name, Password:password, Created:created, Active:active}
+        list = append(list, user)
+    }
+    return list
+}
+
 
 
 func checkErr(err error) {

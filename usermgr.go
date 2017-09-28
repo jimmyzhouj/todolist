@@ -5,7 +5,9 @@ package main
 
 import (
     "time"
+    "fmt"
     "strings"
+    "errors"    
     "golang.org/x/crypto/bcrypt"
     log "github.com/cihub/seelog"        
 )
@@ -16,89 +18,108 @@ type UserMgr struct {
 
 
 func NewUserMgr() (*UserMgr, error) {
-
     return &UserMgr{}, nil
 }
 
 
 
-func (manager *UserMgr) Process(name, password string) (*User, bool) {
+func (manager *UserMgr) AuthUser(name, password string) (*User, error) {
 
-    user := &User{Name:name, Password:password}
+    var msg string
 
-    flag := manager.Validate(user)
-    //do not send back password plaintext
-    user.Password = ""
-
-    if flag == false {
-        return user, false
+    err := manager.Validate(name, password)
+    if err != nil {
+        return nil, err
     }
 
-    tmp := dbGetUser(name)
-    if tmp == nil {
-        log.Debug("user not exist, create one")
-        tmp, ok := manager.CreateUser(name, password)
-        if ok {
-            log.Infof("Created user for name %s success", name)            
-            user = tmp
+    var user *User
+    for _, s := range userCache {
+        if s.Name == name {
+            user = s
         }
+    }
+
+    if user == nil {
+        msg = fmt.Sprintf("user name %s not exit exist, auth fail", name)
+        log.Warn(msg)
+        return nil, errors.New(msg)
+
     } else {
         // compare password
         log.Debug("user exist, verify password")        
         pass := []byte(password)
-        hash := []byte(tmp.Password)
+        hash := []byte(user.Password)
         if bcrypt.CompareHashAndPassword(hash, pass) != nil {
             log.Infof("%s not match %s!", hash, pass)
-            user.Errors["Password"] = "password not match!"
-            return user, false
+            msg = fmt.Sprintf("password not match user name")
+            log.Warn(msg)
+            return nil, errors.New(msg)            
         }        
-        user = tmp
+
         log.Debug("pass verify, get user data")        
     }
-    return user, true
+    return user, nil
 }    
 
-func (manager *UserMgr) CreateUser(name, password string) (*User, bool) {
+func (manager *UserMgr) CreateUser(name, password string) (*User, error) {
+    var msg string
+
+    err := manager.Validate(name, password)
+    if err != nil {
+        return nil, err
+    }
+
+    for _, s := range userCache {
+        if s.Name == name {
+            msg = fmt.Sprintf("user name %s already exist, register fail", name)
+            log.Warn(msg)
+            return nil, errors.New(msg)
+        }
+    }
 
     pass := []byte(password)
     hp, err := bcrypt.GenerateFromPassword(pass, 10)
     if err != nil {
-        log.Warnf("GenerateFromPassword error: %s", err)
-        return nil, false
+        msg = fmt.Sprintf("GenerateFromPassword error: %s", err)
+        log.Warn(msg)
+        return nil, errors.New(msg)
     }
 
     if bcrypt.CompareHashAndPassword(hp, pass) != nil {
-        log.Warnf("%s should hash %s correctly", hp, pass)
-        return nil, false
+        msg = fmt.Sprintf("%s should hash %s correctly", hp, pass)        
+        log.Warn(msg)
+        return nil, errors.New(msg)
     }
     passwd := string(hp)
     log.Debugf("salted password is %s", passwd)
     
     user := &User{Name:name, Password:passwd, Created:time.Now(), Active:true}
     ok := dbInsertUser(user)
-    
+    if ok {
+        // append new user
+        userCache = append(userCache, user)
+    }
+
     log.Debug("create user")
-    return user, ok   
+    return user, nil   
 }    
 
 
 
 // validate if user name and password fit our rule, like not empyt, only a-zA-Z0-9
-func (manager *UserMgr) Validate(user *User) bool {
+func (manager *UserMgr) Validate(name string, password string) error {
 
-    name := strings.TrimSpace(user.Name)
-    password := strings.TrimSpace(user.Password)
-
-    user.Errors = make(map[string]string)
+    name = strings.TrimSpace(name)
+    password = strings.TrimSpace(password)
 
     if name == "" {
-        user.Errors["Name"] = "usr name can not be empty"
+        return errors.New("user name can not be empty")
     }
     if password == "" {
-        user.Errors["Password"] = "password can not be empty"
+        return errors.New("password can not be empty")
     }
 
-    return len(user.Errors) == 0
+    return nil
 }
 
 

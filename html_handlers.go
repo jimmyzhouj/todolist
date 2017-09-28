@@ -205,26 +205,26 @@ func showLogin(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 
 func loginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    log.Debug("post /login handler run") 
+    // log.Debug("post /login handler run") 
 
-    r.ParseForm()
-    name := r.FormValue("name")
-    password := r.FormValue("password")
+    // r.ParseForm()
+    // name := r.FormValue("name")
+    // password := r.FormValue("password")
 
-    user, ok := userMgr.Process(name, password)
-    if ok == false {
-        err := templates.ExecuteTemplate(w, "login.html", user)
-        if err != nil {
-            http.Error(w, err.Error(), http.StatusInternalServerError)
-        }
-        return
-    }
-    // login in success, get session 
-    //fmt.Fprint(w, "get user success!\n")
-    sess := globalSessions.SessionStart(w, r)
-    // connect session and user
-    sess.Set("username", name)
-    log.Debugf("bind username %s to curr session \n", name)
+    // user, ok := userMgr.Process(name, password)
+    // if ok == false {
+    //     err := templates.ExecuteTemplate(w, "login.html", user)
+    //     if err != nil {
+    //         http.Error(w, err.Error(), http.StatusInternalServerError)
+    //     }
+    //     return
+    // }
+    // // login in success, get session 
+    // //fmt.Fprint(w, "get user success!\n")
+    // sess := globalSessions.SessionStart(w, r)
+    // // connect session and user
+    // sess.Set("username", name)
+    // log.Debugf("bind username %s to curr session \n", name)
 
     http.Redirect(w, r, "/list", http.StatusFound) 
 }    

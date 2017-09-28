@@ -23,11 +23,16 @@ func NewRouter() *httprouter.Router {
     router.GET("/logout", showLogout)    
     router.POST("/logout", logoutHandler)
 
-    //router.POST("/api/login", apiLoginHandler)  // api user login
+    router.POST("/api/v1/user", apiRegister)  
+    router.POST("/api/v1/user/login", apiLogin)
+    router.GET("/api/v1/user/logout", apiLogout)    
     router.POST("/api/v1/todos", apiItemCreate)     
     router.GET("/api/v1/todos", apiItemList)     
     router.GET("/api/v1/todos/:id", apiItemShow)
     router.PATCH("/api/v1/todos/:id", apiItemUpdate)
-    router.DELETE("/api/v1/todos/:id", apiItemDelete)          
+    router.DELETE("/api/v1/todos/:id", apiItemDelete)
+
+
+
     return router
 } 

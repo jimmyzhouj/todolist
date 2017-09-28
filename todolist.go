@@ -16,6 +16,7 @@ import (
 var globalSessions *session.Manager
 
 var userMgr *UserMgr
+var userCache []*User
 
 // init all resoureses
 func init() {
@@ -29,6 +30,8 @@ func main() {
 
     initSeeLog()
     initDB()
+
+    userCache = dbGetAllUsers()
 
     router := NewRouter()
     //http.ListenAndServe(":8082", router)
